@@ -2193,6 +2193,7 @@ fn deserialize_identifier(
         // `aliases` also contains a main name
         quote!(#(#aliases)|* => _serde::__private::Ok(#this_value::#ident))
     });
+
     let bytes_mapping = fields.iter().map(|(_, ident, aliases)| {
         // `aliases` also contains a main name
         let aliases = aliases
@@ -2382,7 +2383,7 @@ fn deserialize_identifier(
     };
 
     let visit_borrowed = if fallthrough_borrowed.is_some() || collect_other_fields {
-        let str_mapping = str_mapping.clone();
+        let str_mapping = bytes_mapping.clone();
         let bytes_mapping = bytes_mapping.clone();
         let fallthrough_borrowed_arm = fallthrough_borrowed.as_ref().unwrap_or(fallthrough_arm);
         Some(quote! {
@@ -2390,7 +2391,7 @@ fn deserialize_identifier(
             where
                 __E: _serde::de::Error,
             {
-                match __value {
+                match __value.as_bytes() {
                     #(#str_mapping,)*
                     _ => {
                         #value_as_borrowed_str_content
@@ -2417,6 +2418,7 @@ fn deserialize_identifier(
         None
     };
 
+    let str_mapping = bytes_mapping.clone();
     quote_block! {
         fn expecting(&self, __formatter: &mut _serde::__private::Formatter) -> _serde::__private::fmt::Result {
             _serde::__private::Formatter::write_str(__formatter, #expecting)
@@ -2428,7 +2430,7 @@ fn deserialize_identifier(
         where
             __E: _serde::de::Error,
         {
-            match __value {
+            match __value.as_bytes() {
                 #(#str_mapping,)*
                 _ => {
                     #value_as_str_content

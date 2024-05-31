@@ -2189,17 +2189,15 @@ fn deserialize_identifier(
     collect_other_fields: bool,
     expecting: Option<&str>,
 ) -> Fragment {
-    let str_mapping = fields.iter().map(|(_, ident, aliases)| {
-        // `aliases` also contains a main name
-        quote!(#(#aliases)|* => _serde::__private::Ok(#this_value::#ident))
-    });
-    let bytes_mapping = fields.iter().map(|(_, ident, aliases)| {
+    let bytes_mapping_func = || fields.iter().map(|(_, ident, aliases)| {
         // `aliases` also contains a main name
         let aliases = aliases
             .iter()
             .map(|alias| Literal::byte_string(alias.as_bytes()));
         quote!(#(#aliases)|* => _serde::__private::Ok(#this_value::#ident))
     });
+    let str_mapping = bytes_mapping_func();
+    let bytes_mapping = bytes_mapping_func();
 
     let expecting = expecting.unwrap_or(if is_variant {
         "variant identifier"
